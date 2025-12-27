@@ -2,10 +2,10 @@ import pandas as pd
 import requests
 from sqlalchemy import create_engine
 import urllib
-import time
 import os
+import time
 
-# --- 1. CONFIGURAÇÃO DO BANCO (Igual ao anterior) ---
+# --- 1. CONFIGURAÇÃO (Mantém igual) ---
 SERVER = os.getenv('DB_SERVER')
 DATABASE = os.getenv('DB_NAME')
 USERNAME = os.getenv('DB_USER')
@@ -17,46 +17,46 @@ params = urllib.parse.quote_plus(
     f'DATABASE={DATABASE};'
     f'UID={USERNAME};'
     f'PWD={PASSWORD};'
-    f'TrustServerCertificate=yes;' # Adicionamos isso para o Driver 18
+    f'TrustServerCertificate=yes;'
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
-url = "https://economia.awesomeapi.com.br/last/USD-BRL"
+# --- 2. EXTRAÇÃO COM FALLBACK (A SOLUÇÃO) ---
 
-print(f"Fazendo requisição para: {url}")
-response = requests.get(url)
-data = response.json()
+def buscar_dolar():
+    # Tentativa 1: AwesomeAPI (Sua favorita)
+    try:
+        url = "https://economia.awesomeapi.com.br/last/USD-BRL"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return {"bid": data['USDBRL']['bid'], "source": "AwesomeAPI"}
+    except:
+        print("AwesomeAPI falhou, tentando reserva...")
 
-# O PULO DO GATO: Printar o que a API mandou para debugar no log do GitHub
-print(f"Resposta da API: {data}")
+    # Tentativa 2: Fallback (API Reserva do GitHub - Mais estável para Actions)
+    try:
+        url_alt = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json"
+        response = requests.get(url_alt)
+        data = response.json()
+        return {"bid": data['usd']['brl'], "source": "FallbackAPI"}
+    except Exception as e:
+        raise Exception(f"Todas as APIs falharam: {e}")
 
-# Tratamento para evitar o KeyError
-# Verificamos se a chave existe antes de tentar ler
-if 'USDBRL' in data:
-    dados_dolar = data['USDBRL']
-elif 'USDTBRL' in data: # Caso você mude para USDT no futuro
-    dados_dolar = data['USDTBRL']
-else:
-    # Se não encontrar a chave, levantamos um erro amigável
-    raise Exception(f"Chave de moeda não encontrada! O que veio da API foi: {data}")
+# Executa a busca inteligente
+resultado = buscar_dolar()
+print(f"Dados obtidos via {resultado['source']}")
 
-# Criando o DataFrame (usamos [dados_dolar] para virar uma linha)
-df = pd.DataFrame([dados_dolar])
+# Criando o DataFrame com o valor padronizado
+df = pd.DataFrame([{
+    "moeda": "USD",
+    "bid": float(resultado['bid']),
+    "data_consulta": pd.Timestamp.now()
+}])
 
-cols_to_numeric = ["high", "low", "bid", "ask", "varBid", "pctChange"]
-for col in cols_to_numeric:
-    df[col] = pd.to_numeric(df[col])
-
-print(df.head())
-
+# --- 3. CARGA ---
 try:
-    df.to_sql('tb_cotacao_usdt', con=engine, if_exists = 'replace', index=False)
-    print("✅ Sucesso! a cotação foi carregada.")
+    df.to_sql('tb_cotacao_usdt', con=engine, if_exists='replace', index=False)
+    print(f"✅ Sucesso! Valor de R$ {resultado['bid']} carregado.")
 except Exception as e:
-   print(f"❌ Erro: {e}")
-
-
-
-
-
-
+    print(f"❌ Erro no SQL: {e}")
