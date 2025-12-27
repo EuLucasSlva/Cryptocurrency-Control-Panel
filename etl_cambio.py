@@ -12,11 +12,12 @@ USERNAME = os.getenv('DB_USER')
 PASSWORD = os.getenv('DB_PASS')
 
 params = urllib.parse.quote_plus(
-    f'DRIVER={{ODBC Driver 17 for SQL Server}};'
+    f'DRIVER={{ODBC Driver 18 for SQL Server}};'
     f'SERVER={SERVER};'
     f'DATABASE={DATABASE};'
     f'UID={USERNAME};'
-    f'PWD={PASSWORD}'
+    f'PWD={PASSWORD};'
+    f'TrustServerCertificate=yes;' # Adicionamos isso para o Driver 18
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 

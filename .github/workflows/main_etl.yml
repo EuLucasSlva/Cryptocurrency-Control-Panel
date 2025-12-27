@@ -22,7 +22,7 @@ jobs:
     - name: Instalar Drivers SQL (Essencial para Azure)
       run: |
         sudo apt-get update
-        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
+        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
 
     - name: Instalar Bibliotecas do Python
       run: |
