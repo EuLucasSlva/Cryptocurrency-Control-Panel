@@ -1,0 +1,45 @@
+name: Executar ETL Cripto e Cambio
+
+on:
+  schedule:
+    # Roda todos os dias às 09:00 UTC (06:00 horário de Brasília)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Permite que você rode manualmente clicando em um botão
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Baixar código do repositório
+      uses: actions/checkout@v3
+
+    - name: Instalar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Instalar Drivers SQL (Essencial para Azure)
+      run: |
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17
+
+    - name: Instalar Bibliotecas do Python
+      run: |
+        pip install -r requirements.txt
+
+    - name: Rodar ETL Câmbio
+      env:
+        DB_SERVER: ${{ secrets.DB_SERVER }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASS: ${{ secrets.DB_PASS }}
+      run: python etl_cambio.py
+
+    - name: Rodar ETL Binance
+      env:
+        DB_SERVER: ${{ secrets.DB_SERVER }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASS: ${{ secrets.DB_PASS }}
+      run: python etl_binance.py
