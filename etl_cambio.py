@@ -21,15 +21,26 @@ params = urllib.parse.quote_plus(
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
-url ="https://economia.awesomeapi.com.br/last/USD-BRL"
+url = "https://economia.awesomeapi.com.br/last/USD-BRL"
 
+print(f"Fazendo requisição para: {url}")
 response = requests.get(url)
 data = response.json()
 
-# A API retorna os dados dentro da chave 'USDBRL'
-dados_dolar = data['USDBRL']
+# O PULO DO GATO: Printar o que a API mandou para debugar no log do GitHub
+print(f"Resposta da API: {data}")
 
-# Criando o DataFrame a partir do dicionário (usamos [dados_dolar] para virar uma linha)
+# Tratamento para evitar o KeyError
+# Verificamos se a chave existe antes de tentar ler
+if 'USDBRL' in data:
+    dados_dolar = data['USDBRL']
+elif 'USDTBRL' in data: # Caso você mude para USDT no futuro
+    dados_dolar = data['USDTBRL']
+else:
+    # Se não encontrar a chave, levantamos um erro amigável
+    raise Exception(f"Chave de moeda não encontrada! O que veio da API foi: {data}")
+
+# Criando o DataFrame (usamos [dados_dolar] para virar uma linha)
 df = pd.DataFrame([dados_dolar])
 
 cols_to_numeric = ["high", "low", "bid", "ask", "varBid", "pctChange"]
