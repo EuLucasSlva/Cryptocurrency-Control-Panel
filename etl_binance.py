@@ -23,7 +23,7 @@ engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
 # --- 2. EXTRAÇÃO MULTI-MOEDAS ---
 moedas = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'ADAUSDT']
-url = "https://api.binance.com/api/v3/klines"
+url = "https://api1.binance.com/api/v3/klines"
 lista_frames = []
 
 print(f"--- Iniciando Extração Binance (Data: {pd.Timestamp.now()}) ---")
