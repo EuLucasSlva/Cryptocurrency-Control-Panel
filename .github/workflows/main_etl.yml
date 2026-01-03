@@ -36,10 +36,18 @@ jobs:
         DB_PASS: ${{ secrets.DB_PASS }}
       run: python etl_cambio.py
 
-    - name: Rodar ETL Binance
+    - name: etl Ibovespa
       env:
         DB_SERVER: ${{ secrets.DB_SERVER }}
         DB_NAME: ${{ secrets.DB_NAME }}
         DB_USER: ${{ secrets.DB_USER }}
         DB_PASS: ${{ secrets.DB_PASS }}
-      run: python etl_binance.py
+      run: python etl_Ibovespa.py
+
+    - name: ETL nasdaq
+      env:
+        DB_SERVER: ${{ secrets.DB_SERVER }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASS: ${{ secrets.DB_PASS }}
+      run: python etl_nasdaq.py
