@@ -52,18 +52,18 @@ dados = yf.download(acoes_br, period="2y")["Close"]
 df_final = dados.reset_index().melt(
     id_vars=['Date'], 
     var_name='Ticker', 
-    value_name='Close'
+    value_name='Close' 
 )
 
-#Limpeza e padronização
-df_final['Ticker'] = df_final['Ticker'].str.replace('.SA','',regex=False)
-df_final['Close'] = df_final['close'].round(2)
+# Limpeza e Padronização
+df_final['Ticker'] = df_final['Ticker'].str.replace('.SA', '', regex=False)
+
+df_final['Close'] = df_final['Close'].round(2) 
 df_final.dropna(inplace=True)
 
-print(f"Transformação concluída. Amostra:\n{df_final.head()}")
-print(f"Total de linhas para carga: {len(df_final)}")
+print(f"Transformação concluída. Colunas: {df_final.columns}")
+print(f"Amostra:\n{df_final.head()}")
 
-#Carregamento no Azure
 try:
     print("Enviando para o Azure SQL...")
     df_final.to_sql('tb_acoes_br_historico', con=engine, if_exists='replace', index=False)
