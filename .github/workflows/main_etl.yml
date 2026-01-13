@@ -2,8 +2,8 @@ name: Executar ETL Cripto e Cambio
 
 on:
   schedule:
-    # Roda todos os dias às 09:00 UTC (06:00 horário de Brasília)
-    - cron: '0 9 * * *'
+    # Minuto 0, Hora 9, Qualquer dia do mês, Qualquer mês, Dia da semana 1 (Segunda)
+    - cron: '0 9 * * 1'
   workflow_dispatch: # Permite que você rode manualmente clicando em um botão
 
 jobs:
