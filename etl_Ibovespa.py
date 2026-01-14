@@ -25,16 +25,16 @@ params = urllib.parse.quote_plus(
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
 acoes_br = [
-    "VALE3.SA",  # Vale
-    "PETR4.SA",  # Petrobras PN
-    "ITUB4.SA",  # Itaú Unibanco
-    "PETR3.SA",  # Petrobras ON
-    "BBAS3.SA",  # Banco do Brasil
+    "VALE3.SA",  # Vale-
+    "PETR4.SA",  # Petrobras PN-
+    "ITUB4.SA",  # Itaú Unibanco-
+    "BBDC4.SA",  # Bradesco
+    "BBAS3.SA",  # Banco do Brasil-
     "B3SA3.SA",  # B3
     "ELET3.SA",  # Eletrobras
     "ABEV3.SA",  # Ambev
-    "RENT3.SA",  # Localiza
-    "WEGE3.SA",  # Weg
+    "RENT3.SA",  # Localiza 
+    "WEGE3.SA",  # Weg-
     "ITSA4.SA",  # Itaúsa
     "BPAC11.SA", # BTG Pactual
     "SUZB3.SA",  # Suzano
