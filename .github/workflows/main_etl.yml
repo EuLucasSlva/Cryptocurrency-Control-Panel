@@ -1,25 +1,26 @@
-name: Executar ETL Cripto e Cambio
+name: Executar ETL Completo (Câmbio, Ações, Cripto)
 
 on:
   schedule:
-    # Minuto 0, Hora 9, Qualquer dia do mês, Qualquer mês, Dia da semana 1 (Segunda)
+    # Rodar toda Segunda-feira às 09:00 UTC (06:00 BRT)
     - cron: '0 9 * * 1'
-  workflow_dispatch: # Permite que você rode manualmente clicando em um botão
+  workflow_dispatch: # Botão para rodar manualmente
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+    # --- PREPARAÇÃO DO AMBIENTE ---
     - name: Baixar código do repositório
       uses: actions/checkout@v3
 
-    - name: Instalar Python
+    - name: Instalar Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.11' # Versão compatível com yfinance atualizado
 
-    - name: Instalar Drivers SQL (Essencial para Azure)
+    - name: Instalar Drivers SQL (ODBC 18)
       run: |
         sudo apt-get update
         sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
@@ -28,7 +29,10 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    - name: Rodar ETL Câmbio
+    # --- EXECUÇÃO DOS SCRIPTS (ORDEM ESTRATÉGICA) ---
+    
+    # 1. O DESPERTADOR: Este script tem o retry logic para acordar o Azure
+    - name: 1. Rodar ETL Câmbio (Acorda o Banco)
       env:
         DB_SERVER: ${{ secrets.DB_SERVER }}
         DB_NAME: ${{ secrets.DB_NAME }}
@@ -36,7 +40,8 @@ jobs:
         DB_PASS: ${{ secrets.DB_PASS }}
       run: python etl_cambio.py
 
-    - name: etl Ibovespa
+    # 2. AÇÕES BRASIL: Pega o banco já acordado
+    - name: 2. Rodar ETL Ibovespa (B3)
       env:
         DB_SERVER: ${{ secrets.DB_SERVER }}
         DB_NAME: ${{ secrets.DB_NAME }}
@@ -44,10 +49,20 @@ jobs:
         DB_PASS: ${{ secrets.DB_PASS }}
       run: python etl_Ibovespa.py
 
-    - name: ETL nasdaq
+    # 3. AÇÕES USA: Pega o banco já acordado
+    - name: 3. Rodar ETL Nasdaq (USA)
       env:
         DB_SERVER: ${{ secrets.DB_SERVER }}
         DB_NAME: ${{ secrets.DB_NAME }}
         DB_USER: ${{ secrets.DB_USER }}
         DB_PASS: ${{ secrets.DB_PASS }}
       run: python etl_nasdaq.py
+
+    # 4. CRIPTOMOEDAS: O último da fila
+    - name: 4. Rodar ETL Binance (Cripto)
+      env:
+        DB_SERVER: ${{ secrets.DB_SERVER }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASS: ${{ secrets.DB_PASS }}
+      run: python etl_binance.py

@@ -20,7 +20,7 @@ params = urllib.parse.quote_plus(
     f'PWD={PASSWORD};'
     f'Encrypt=yes;'
     f'TrustServerCertificate=yes;'
-    f'Connection Timeout=60;'
+    f'Connection Timeout=180;'
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
