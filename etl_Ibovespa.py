@@ -20,7 +20,7 @@ params = urllib.parse.quote_plus(
     f'PWD={PASSWORD};'
     f'Encrypt=yes;'
     f'TrustServerCertificate=yes;'
-    f'Connection Timeout=60;'
+    f'Connection Timeout=180;'
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
@@ -28,17 +28,17 @@ acoes_br = [
     "VALE3.SA",  # Vale-
     "PETR4.SA",  # Petrobras PN-
     "ITUB4.SA",  # Itaú Unibanco-
-    "BBDC4.SA",  # Bradesco
+    "BBDC4.SA",  # Bradesco -
     "BBAS3.SA",  # Banco do Brasil-
-    "B3SA3.SA",  # B3
-    "ELET3.SA",  # Eletrobras
-    "ABEV3.SA",  # Ambev
-    "RENT3.SA",  # Localiza 
+    "B3SA3.SA",  # B3-
+    "ELET3.SA",  # Eletrobras-
+    "ABEV3.SA",  # Ambev-
+    "RENT3.SA",  # Localiza -
     "WEGE3.SA",  # Weg-
-    "ITSA4.SA",  # Itaúsa
-    "BPAC11.SA", # BTG Pactual
-    "SUZB3.SA",  # Suzano
-    "HAPV3.SA",  # Hapvida
+    "ITSA4.SA",  # Itaúsa-
+    "BPAC11.SA", # BTG Pactual-
+    "SUZB3.SA",  # Suzano-
+    "HAPV3.SA",  # Hapvida-
     "RDOR3.SA",  # Rede D'Or
     "^BVSP"      # O próprio índice IBOVESPA
 ]
