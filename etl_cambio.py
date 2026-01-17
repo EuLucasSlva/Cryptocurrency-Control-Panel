@@ -4,6 +4,8 @@ from sqlalchemy import create_engine
 import urllib
 import os
 import time
+import time
+from sqlalchemy import text
 
 # --- 1. CONFIGURAÇÃO E VALIDAÇÃO DE AMBIENTE ---
 SERVER = os.getenv('DB_SERVER')
@@ -61,11 +63,27 @@ df = pd.DataFrame([{
     "data_consulta": pd.Timestamp.now()
 }])
 
-# --- 3. CARGA COM ERRO EXPLÍCITO ---
-try:
-    print(f"Tentando carregar cotação no Azure...")
-    df.to_sql('tb_cotacao_usdt', con=engine, if_exists='replace', index=False)
-    print(f"✅ Sucesso! Valor de R$ {resultado['bid']} carregado.")
-except Exception as e:
-    print(f"❌ Erro fatal no SQL (Câmbio): {e}")
-    raise e # Faz o GitHub Actions ficar vermelho em caso de erro
+# --- 3. CARGA COM RETRY (DESPERTADOR) ---
+
+
+max_retries = 3
+wait_seconds = 45 # Tempo para o Azure "bocejar" e levantar
+
+for i in range(1, max_retries + 1):
+    try:
+        print(f"Tentativa {i}: Conectando ao Azure...")
+        # Testa a conexão com um comando leve
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        
+        # Se funcionar, carrega os dados
+        df.to_sql('tb_cotacao_usdt', con=engine, if_exists='replace', index=False)
+        print("✅ Banco acordado e dados carregados!")
+        break 
+    except Exception as e:
+        if i < max_retries:
+            print(f"⚠️ Banco dormindo. Aguardando {wait_seconds}s para a próxima tentativa...")
+            time.sleep(wait_seconds)
+        else:
+            print("❌ Erro definitivo após retentativas.")
+            raise e
