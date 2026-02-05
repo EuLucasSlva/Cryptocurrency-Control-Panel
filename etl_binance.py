@@ -61,7 +61,7 @@ moedas_map = [
 lista_frames = []
 session = criar_sessao_robusta()
 
-print(f"--- Iniciando Extração Top 15 com Market Cap ---")
+print(f"--- Iniciando Extração Top 15 com Market Cap e Volume ---")
 
 for item in moedas_map:
     sucesso = False
@@ -73,14 +73,18 @@ for item in moedas_map:
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = session.get(url, headers=headers, timeout=10)
         data = response.json()
-        
-        if 'prices' in data and 'market_caps' in data:
+
+        if 'prices' in data and 'market_caps' in data and 'total_volumes' in data:
+
             df_prices = pd.DataFrame(data['prices'], columns=['timestamp', 'price'])
             df_prices['Date'] = pd.to_datetime(df_prices['timestamp'], unit='ms')
             
             df_mc = pd.DataFrame(data['market_caps'], columns=['timestamp', 'market_cap'])
             
+            df_vol = pd.DataFrame(data['total_volumes'], columns=['timestamp', 'volume'])
+            
             df_prices['Market_Cap'] = df_mc['market_cap']
+            df_prices['Volume'] = df_vol['volume']
             
             df_prices['Close Price'] = df_prices['price']
             df_prices['Moeda'] = item['coingecko'].upper()
@@ -95,18 +99,16 @@ for item in moedas_map:
             df_prices['Open Price'] = df_prices['Close Price']
             df_prices['High Price'] = df_prices['Close Price']
             df_prices['Low Price'] = df_prices['Close Price']
-            df_prices['Volume'] = 0
             df_prices['Number of Trades'] = 0
 
             lista_frames.append(df_prices[['Date', 'Moeda', 'Open Price', 'High Price', 'Low Price', 'Close Price', 'Volume', 'Number of Trades', 'Market_Cap']])
-            print(f"✅ Sucesso via CoinGecko (com Market Cap)!")
+            print(f"✅ Sucesso via CoinGecko (com Market Cap e Volume)!")
             sucesso = True
             
     except Exception as e:
         print(f"⚠️ CoinGecko falhou para {item['coingecko']}: {e}")
 
-    # TENTATIVA 2: BINANCE VISION (Backup - Sem Market Cap)
-    if not sucesso and item['coingecko'] != 'tether': # Pula Tether no fallback da Binance pq o par USDTUSDT é estranho
+    if not sucesso and item['coingecko'] != 'tether':
         try:
             print(f"Tentando {item['binance']} via Binance Vision...")
             url = "https://data-api.binance.vision/api/v3/klines"
@@ -128,7 +130,7 @@ for item in moedas_map:
                 df['Market_Cap'] = 0 
                 
                 lista_frames.append(df[['Date', 'Moeda', 'Open Price', 'High Price', 'Low Price', 'Close Price', 'Volume', 'Number of Trades', 'Market_Cap']])
-                print(f"✅ Sucesso via Binance Vision (Sem Market Cap)!")
+                print(f"✅ Sucesso via Binance Vision (Sem Market Cap, Com Volume)!")
                 sucesso = True
         except Exception as e:
             print(f"❌ Binance Vision também falhou: {e}")
@@ -147,7 +149,7 @@ print(f"Tentando salvar {len(df_final)} linhas no Azure...")
 
 try:
     df_final.to_sql('tb_binance_historico', con=engine, if_exists='replace', index=False)
-    print("✅ SUCESSO ABSOLUTO! Dados carregados com Market Cap.")
+    print("✅ SUCESSO ABSOLUTO! Dados carregados com Market Cap e Volume.")
 except Exception as e:
     print(f"❌ Erro fatal no SQL: {e}")
     raise e

@@ -31,12 +31,13 @@ acoes_usa = [
 
 print(f"--- Iniciando Download da NASDAQ ({len(acoes_usa)} ativos) ---")
 
-dados = yf.download(acoes_usa, period="2y")[["Open", "High", "Low", "Close"]]
+dados = yf.download(acoes_usa, period="2y")[["Open", "High", "Low", "Close", "Volume"]]
 
 df_stack = dados.stack(level=1).reset_index()
-df_stack.columns = ['Date', 'Ticker', 'Close', 'High', 'Low', 'Open']
 
-cols_numeric = ['Open', 'High', 'Low', 'Close']
+df_stack.columns = ['Date', 'Ticker', 'Close', 'High', 'Low', 'Open', 'Volume']
+
+cols_numeric = ['Open', 'High', 'Low', 'Close', 'Volume'] 
 df_stack[cols_numeric] = df_stack[cols_numeric].round(2)
 df_stack.dropna(subset=['Close'], inplace=True)
 df_stack['Mercado'] = 'NASDAQ'
@@ -46,7 +47,7 @@ print(f"Transformação concluída. Amostra:\n{df_stack.head()}")
 try:
     print("Enviando para o Azure SQL...")
     df_stack.to_sql('tb_acoes_nasdaq_historico', con=engine, if_exists='replace', index=False)
-    print("✅ SUCESSO! Dados da NASDAQ (OHLC) carregados.")
+    print("✅ SUCESSO! Dados da NASDAQ (OHLC + Volume) carregados.")
 except Exception as e:
     print(f"❌ Erro fatal no SQL: {e}")
     raise e
