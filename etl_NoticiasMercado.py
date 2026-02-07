@@ -43,7 +43,7 @@ def buscar_noticias_google():
     
             for entry in feed.entries[:6]:
                 try:
-                    dt_pub = datetime(*entry.published_parsed[:6])
+                    dt_pub = datetime(*entry.published_parsed[:15])
                 except:
                     dt_pub = datetime.now()
 
