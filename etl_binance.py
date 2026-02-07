@@ -26,7 +26,7 @@ USERNAME = os.getenv('DB_USER')
 PASSWORD = os.getenv('DB_PASS')
 
 if not all([SERVER, DATABASE, USERNAME, PASSWORD]):
-    raise ValueError("❌ ERRO: Secrets não configurados!")
+    raise ValueError("ERRO: Secrets não configurados!")
 
 params = urllib.parse.quote_plus(
     f'DRIVER={{ODBC Driver 18 for SQL Server}};'
@@ -106,7 +106,7 @@ for item in moedas_map:
             sucesso = True
             
     except Exception as e:
-        print(f"⚠️ CoinGecko falhou para {item['coingecko']}: {e}")
+        print(f"CoinGecko falhou para {item['coingecko']}: {e}")
 
     if not sucesso and item['coingecko'] != 'tether':
         try:
@@ -130,10 +130,10 @@ for item in moedas_map:
                 df['Market_Cap'] = 0 
                 
                 lista_frames.append(df[['Date', 'Moeda', 'Open Price', 'High Price', 'Low Price', 'Close Price', 'Volume', 'Number of Trades', 'Market_Cap']])
-                print(f"✅ Sucesso via Binance Vision (Sem Market Cap, Com Volume)!")
+                print(f"Sucesso via Binance Vision (Sem Market Cap, Com Volume)!")
                 sucesso = True
         except Exception as e:
-            print(f"❌ Binance Vision também falhou: {e}")
+            print(f"Binance Vision também falhou: {e}")
 
     print("Aguardando 12 segundos...")
     time.sleep(12)
@@ -149,7 +149,7 @@ print(f"Tentando salvar {len(df_final)} linhas no Azure...")
 
 try:
     df_final.to_sql('tb_binance_historico', con=engine, if_exists='replace', index=False)
-    print("✅ SUCESSO ABSOLUTO! Dados carregados com Market Cap e Volume.")
+    print("SUCESSO ABSOLUTO! Dados carregados com Market Cap e Volume.")
 except Exception as e:
-    print(f"❌ Erro fatal no SQL: {e}")
+    print(f"Erro fatal no SQL: {e}")
     raise e

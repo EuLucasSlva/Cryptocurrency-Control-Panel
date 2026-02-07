@@ -10,7 +10,7 @@ USERNAME = os.getenv('DB_USER')
 PASSWORD = os.getenv('DB_PASS')
 
 if not all([SERVER, DATABASE, USERNAME, PASSWORD]):
-    raise ValueError("❌ ERRO: Secrets não configurados!")
+    raise ValueError("ERRO: Secrets não configurados!")
 
 params = urllib.parse.quote_plus(
     f'DRIVER={{ODBC Driver 18 for SQL Server}};'
@@ -47,7 +47,7 @@ print(f"Transformação concluída. Amostra:\n{df_stack.head()}")
 try:
     print("Enviando para o Azure SQL...")
     df_stack.to_sql('tb_acoes_nasdaq_historico', con=engine, if_exists='replace', index=False)
-    print("✅ SUCESSO! Dados da NASDAQ (OHLC + Volume) carregados.")
+    print("SUCESSO! Dados da NASDAQ (OHLC + Volume) carregados.")
 except Exception as e:
-    print(f"❌ Erro fatal no SQL: {e}")
+    print(f"Erro fatal no SQL: {e}")
     raise e
