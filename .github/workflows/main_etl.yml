@@ -29,7 +29,6 @@ jobs:
       run: |
         pip install -r requirements.txt
 
-    # --- EXECUÇÃO DOS SCRIPTS (ORDEM ESTRATÉGICA) ---
     
     # 1. O DESPERTADOR: Este script tem o retry logic para acordar o Azure
     - name: 1. Rodar ETL Câmbio (Acorda o Banco)
@@ -39,6 +38,14 @@ jobs:
         DB_USER: ${{ secrets.DB_USER }}
         DB_PASS: ${{ secrets.DB_PASS }}
       run: python etl_cambio.py
+
+    - name: 5. Rodar Noticias
+      env:
+        DB_SERVER: ${{ secrets.DB_SERVER }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASS: ${{ secrets.DB_PASS }}
+      run: python etl_NoticiasMercado.py
 
     # 2. AÇÕES BRASIL: Pega o banco já acordado
     - name: 2. Rodar ETL Ibovespa (B3)
