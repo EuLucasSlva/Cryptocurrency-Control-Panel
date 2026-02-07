@@ -41,7 +41,7 @@ def buscar_noticias_google():
             print(f"Buscando notícias para: {item['ticker']}...")
             feed = feedparser.parse(rss_url)
     
-            for entry in feed.entries[:2]:
+            for entry in feed.entries[:6]:
                 try:
                     dt_pub = datetime(*entry.published_parsed[:6])
                 except:
