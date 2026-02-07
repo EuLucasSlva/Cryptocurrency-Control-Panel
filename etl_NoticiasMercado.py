@@ -1,9 +1,10 @@
 import pandas as pd
-import yfinance as yf
-from sqlalchemy import create_engine, text
+import feedparser
+from sqlalchemy import create_engine
 import urllib
 import os
-import datetime
+from datetime import datetime
+import time
 
 SERVER = os.getenv('DB_SERVER')
 DATABASE = os.getenv('DB_NAME')
@@ -22,59 +23,67 @@ params = urllib.parse.quote_plus(
 )
 engine = create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
-ativos_noticias = [
-    {'ticker': 'BTC-USD', 'tipo': 'CRIPTO', 'nome': 'Bitcoin'},
-    {'ticker': 'ETH-USD', 'tipo': 'CRIPTO', 'nome': 'Ethereum'},
-    {'ticker': 'BRL=X',   'tipo': 'FIAT',   'nome': 'Dolar vs Real'}, 
-    {'ticker': '^IXIC',   'tipo': 'INDICE', 'nome': 'Nasdaq Composite'},
-    {'ticker': '^BVSP',   'tipo': 'INDICE', 'nome': 'Ibovespa'}
+ativos_busca = [
+    {'ticker': 'BTC-USD', 'tipo': 'CRIPTO', 'query': 'Bitcoin BTC preço mercado'},
+    {'ticker': '^IXIC',   'tipo': 'INDICE', 'query': 'Nasdaq bolsa valores'},
+    {'ticker': '^BVSP',   'tipo': 'INDICE', 'query': 'Ibovespa ações brasil'}
 ]
 
-def buscar_noticias_yahoo():
+def buscar_noticias_google():
     lista_noticias = []
+    print("--- Iniciando Coleta de Notícias (Google News RSS) ---")
     
-    print("--- Iniciando Coleta de Notícias ---")
-    
-    for item in ativos_noticias:
+    for item in ativos_busca:
         try:
-            print(f"Buscando notícias para: {item['nome']} ({item['ticker']})...")
-            ticker_obj = yf.Ticker(item['ticker'])
-            news = ticker_obj.news
+            termo = item['query'].replace(' ', '%20')
+            rss_url = f"https://news.google.com/rss/search?q={termo}&hl=pt-BR&gl=BR&ceid=BR:pt-419"
             
-            for n in news:
-                pub_date = pd.to_datetime(n.get('providerPublishTime'), unit='s')
-                
+            print(f"Buscando notícias para: {item['ticker']}...")
+            feed = feedparser.parse(rss_url)
+    
+            for entry in feed.entries[:2]:
+                try:
+                    dt_pub = datetime(*entry.published_parsed[:6])
+                except:
+                    dt_pub = datetime.now()
+
                 lista_noticias.append({
-                    'Data': pub_date,
-                    'Ativo': item['ticker'],
-                    'Tipo': item['tipo'],
-                    'Titulo': n.get('title'),
-                    'Fonte': n.get('publisher'),
-                    'Link': n.get('link'),
-                    'UUID': n.get('uuid') 
+                    'Data': dt_pub,
+                    'Ativo': item['ticker'],  
+                    'Tipo': item['tipo'],    
+                    'Titulo': entry.title,
+                    'Fonte': entry.source.title if 'source' in entry else 'Google News',
+                    'Link': entry.link,
+                    'UUID': entry.id if 'id' in entry else None 
                 })
         except Exception as e:
             print(f"Erro ao buscar {item['ticker']}: {e}")
             
     return pd.DataFrame(lista_noticias)
 
-df_news = buscar_noticias_yahoo()
+df_news = buscar_noticias_google()
 
 if not df_news.empty:
-    print(f"\nColetadas {len(df_news)} notícias.")
+    print(f"\nColetadas {len(df_news)} notícias no total.")
 
     df_news = df_news.sort_values(by='Data', ascending=False)
 
-    ontem = pd.Timestamp.now() - pd.Timedelta(days=1)
+    ontem = datetime.now() - pd.Timedelta(days=1)
     df_news_recentes = df_news[df_news['Data'] > ontem]
     
-    print(f"Salvando {len(df_news_recentes)} notícias recentes no SQL...")
-    
-    try:
-        df_news_recentes.to_sql('tb_noticias_mercado', con=engine, if_exists='append', index=False)
-        print("Notícias salvas com sucesso!")
+    if not df_news_recentes.empty:
+        print(f"\n--- PREVIEW DE SALVAMENTO ({len(df_news_recentes)} itens) ---")
+        print(df_news_recentes[['Data', 'Ativo', 'Titulo']].head())
         
-    except Exception as e:
-        print(f"Erro ao salvar no banco: {e}")
+        print(f"\nSalvando {len(df_news_recentes)} notícias recentes no SQL Server...")
+        
+        try:
+            df_news_recentes.to_sql('tb_noticias_mercado', con=engine, if_exists='append', index=False)
+            print("SUCESSO: Notícias salvas no banco!")
+            
+        except Exception as e:
+            print(f"ERRO AO SALVAR NO BANCO: {e}")
+    else:
+        print("Nenhuma notícia nova (nas últimas 24h) para salvar.")
 else:
     print("Nenhuma notícia encontrada.")
